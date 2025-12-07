@@ -9,6 +9,8 @@ on:
       - 'JS-PlayWright/**'
   schedule:
     - cron: "30 6 * * *"   
+    
+  workflow_dispatch:  
 
 jobs:
   test:
