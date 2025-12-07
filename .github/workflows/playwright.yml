@@ -7,17 +7,12 @@ on:
   pull_request:
     paths:
       - 'JS-PlayWright/**'
-
   schedule:
-    - cron: "30 6 * * *"
+    - cron: "30 6 * * *"   
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: JS-PlayWright
 
     steps:
       - name: Checkout repository
@@ -28,14 +23,18 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          cache-dependency-path: JS-PlayWright/package-lock.json
 
       - name: Install dependencies
+        working-directory: JS-PlayWright
         run: npm ci
 
       - name: Install Playwright browsers
+        working-directory: JS-PlayWright
         run: npx playwright install --with-deps
 
       - name: Run Playwright tests
+        working-directory: JS-PlayWright
         run: npx playwright test
 
       - name: Upload Playwright HTML report
