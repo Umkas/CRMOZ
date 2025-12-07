@@ -1,0 +1,129 @@
+{
+	"info": {
+		"_postman_id": "ab0af354-663b-4ca4-9b5a-1bed10892d14",
+		"name": "Users API tests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "33266681"
+	},
+	"item": [
+		{
+			"name": "Positive",
+			"item": [
+				{
+					"name": "Users",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"//should be 200 status code\r",
+									"pm.test(\"Status code is 200\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"//parse JSON and check that the array is not empty\r",
+									"const users = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Response is non-empty array\", () => {\r",
+									"    pm.expect(users).to.be.an(\"array\");\r",
+									"    pm.expect(users.length).to.be.above(0);\r",
+									"});\r",
+									"\r",
+									"//get the first user and retrieve id, name and email fields\r",
+									"const user = users[0];\r",
+									" \r",
+									"pm.test(\"User has required fields: id, name, email\", () => {\r",
+									"    pm.expect(user).to.have.property(\"id\");\r",
+									"    pm.expect(user).to.have.property(\"name\");\r",
+									"    pm.expect(user).to.have.property(\"email\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Negative",
+			"item": [
+				{
+					"name": "Wrong path",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"//should be 404 status code\r",
+									"pm.test(\"Status code is 404\", () => {\r",
+									"    pm.response.to.have.status(404);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/wrong-path",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"wrong-path"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": ""
+		}
+	]
+}
