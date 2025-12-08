@@ -3,7 +3,7 @@ import { RegistrationPage } from './page-objects/registration-page.js';
 import { invalidEmails } from './data/invalid-emails.js';
 
 test.describe('Automation Practice Form', () => {
-  test('не відправляється якщо поля пусті', async ({ page }) => {
+  test('форма не відправляється при некоректному введенні даних (пусті поля)', async ({ page }) => {
     const form = new RegistrationPage(page);
     await form.open();
 
