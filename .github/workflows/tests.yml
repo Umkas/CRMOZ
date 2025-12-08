@@ -5,7 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'JS-PlayWright/**'
-      - '.github/workflows/tests.yaml'
+      - '.github/workflows/tests.yml'
   pull_request:
     branches: [ main ]
     paths:
@@ -54,7 +54,7 @@ jobs:
           name: allure-ui
           path: JS-PlayWright/allure-pages/js-playwright
 
-  # 2) API: Postman 
+  # 2) API: Postman (заглушка)
   api_tests:
     runs-on: ubuntu-latest
 
@@ -62,7 +62,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # згодом додам сюди newman + колекцію Postman
       - name: Prepare placeholder API report
         run: |
           mkdir -p allure-pages/postman
@@ -74,7 +73,7 @@ jobs:
           name: allure-api
           path: allure-pages/postman
 
-  # 3) Публикація всех звітів на GitHub Pages
+  # 3) всі звіти GitHub Pages
   publish_allure_pages:
     needs: [ui_tests, api_tests]
     runs-on: ubuntu-latest
