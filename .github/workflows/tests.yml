@@ -1,0 +1,106 @@
+name: UI + API tests (Playwright + Postman, Allure pages)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'JS-PlayWright/**'
+      - '.github/workflows/tests.yaml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'JS-PlayWright/**'
+  schedule:
+    - cron: "30 6 * * *"   # о 08:30 за Києвом (UTC)
+  workflow_dispatch:
+
+jobs:
+  # 1) UI: Playwright + Allure
+  ui_tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: JS-PlayWright/package-lock.json
+
+      - name: Install dependencies
+        working-directory: JS-PlayWright
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: JS-PlayWright
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        working-directory: JS-PlayWright
+        run: npx playwright test
+
+      - name: Generate Allure report (UI)
+        if: always()
+        working-directory: JS-PlayWright
+        run: npx allure generate ./allure-results --clean -o ./allure-pages/js-playwright
+
+      - name: Upload Allure UI report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-ui
+          path: JS-PlayWright/allure-pages/js-playwright
+
+  # 2) API: Postman 
+  api_tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # згодом додам сюди newman + колекцію Postman
+      - name: Prepare placeholder API report
+        run: |
+          mkdir -p allure-pages/postman
+          echo "<html><body><h1>Postman report will be here</h1></body></html>" > allure-pages/postman/index.html
+
+      - name: Upload Allure API report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-api
+          path: allure-pages/postman
+
+  # 3) Публикація всех звітів на GitHub Pages
+  publish_allure_pages:
+    needs: [ui_tests, api_tests]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Allure UI artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-ui
+          path: ./allure-pages/js-playwright
+
+      - name: Download Allure API artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-api
+          path: ./allure-pages/postman
+
+      - name: Deploy Allure pages to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./allure-pages
