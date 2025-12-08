@@ -1,105 +1,97 @@
-name: UI + API tests (Playwright + Postman, Allure pages)
+name: Tests & Allure reports
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'JS-PlayWright/**'
-      - '.github/workflows/tests.yml'
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'JS-PlayWright/**'
-  schedule:
-    - cron: "30 6 * * *"   # о 08:30 за Києвом (UTC)
   workflow_dispatch:
+    inputs:
+      run-ui:
+        description: "Run Playwright UI tests"
+        type: boolean
+        default: true
+      run-api:
+        description: "Run Postman API tests"
+        type: boolean
+        default: false
+
+  push:
+    branches: [ "main" ]
+    paths:
+      - "JS-PlayWright/**"
+      - "Postman/**"
+      - ".github/workflows/tests.yml"
+
+  schedule:
+    - cron: "30 6 * * *"
 
 jobs:
-  # 1) UI: Playwright + Allure
+  # UI: Playwright + Allure
   ui_tests:
+    name: UI tests (Playwright)
     runs-on: ubuntu-latest
+
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ui == 'true'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Use Node.js 24.x
         uses: actions/setup-node@v4
         with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: JS-PlayWright/package-lock.json
+          node-version: "24.x"
 
-      - name: Install dependencies
+      - name: Install UI dependencies
         working-directory: JS-PlayWright
-        run: npm ci
-
-      - name: Install Playwright browsers
-        working-directory: JS-PlayWright
-        run: npx playwright install --with-deps
+        run: |
+          npm ci
+          npx playwright install --with-deps
 
       - name: Run Playwright tests
         working-directory: JS-PlayWright
         run: npx playwright test
 
       - name: Generate Allure report (UI)
-        if: always()
         working-directory: JS-PlayWright
-        run: npx allure generate ./allure-results --clean -o ./allure-pages/js-playwright
-
-      - name: Upload Allure UI report artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: allure-ui
-          path: JS-PlayWright/allure-pages/js-playwright
-
-  # 2) API: Postman (заглушка)
-  api_tests:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Prepare placeholder API report
         run: |
-          mkdir -p allure-pages/postman
-          echo "<html><body><h1>Postman report will be here</h1></body></html>" > allure-pages/postman/index.html
+          npx allure generate allure-results --clean -o allure-report
 
-      - name: Upload Allure API report artifact
+      - name: Upload Allure UI report
         uses: actions/upload-artifact@v4
         with:
-          name: allure-api
-          path: allure-pages/postman
+          name: allure-ui
+          path: JS-PlayWright/allure-report
 
-  # 3) всі звіти GitHub Pages
-  publish_allure_pages:
-    needs: [ui_tests, api_tests]
+  # API: Postman + Newman + Allure
+  postman_tests:
+    name: API tests (Postman + Newman)
     runs-on: ubuntu-latest
-    if: always()
+
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run-api == 'true'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Download Allure UI artifact
-        uses: actions/download-artifact@v4
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v4
         with:
-          name: allure-ui
-          path: ./allure-pages/js-playwright
+          node-version: "24.x"
 
-      - name: Download Allure API artifact
-        uses: actions/download-artifact@v4
+      - name: Install Newman, Allure reporter and Allure CLI
+        run: |
+          npm install -g newman newman-reporter-allure allure-commandline
+
+      - name: Run Postman collection with Newman
+        run: |
+          newman run Postman/Users_API_tests.postman_collection.json \
+            --reporters cli,allure \
+            --reporter-allure-resultsDir Postman/allure-results
+
+      - name: Generate Allure report (API)
+        run: |
+          allure generate Postman/allure-results --clean -o Postman/allure-report
+
+      - name: Upload Allure API report
+        uses: actions/upload-artifact@v4
         with:
           name: allure-api
-          path: ./allure-pages/postman
-
-      - name: Deploy Allure pages to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./allure-pages
+          path: Postman/allure-report
