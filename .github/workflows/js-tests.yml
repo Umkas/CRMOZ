@@ -1,0 +1,49 @@
+name: UI tests (JS-Playwright)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "JS-PlayWright/**"
+      - ".github/workflows/ui-tests.yml"
+
+  schedule:
+    - cron: "30 6 * * *"
+
+  workflow_dispatch: {}
+
+jobs:
+  ui-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        working-directory: JS-PlayWright
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: JS-PlayWright
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        working-directory: JS-PlayWright
+        run: npx playwright test
+
+      - name: Generate Allure report
+        working-directory: JS-PlayWright
+        run: |
+          npx allure generate allure-results --clean -o allure-report
+
+      - name: Upload Allure report
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-ui-report
+          path: JS-PlayWright/allure-report

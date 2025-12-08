@@ -1,0 +1,37 @@
+name: API tests (Postman)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Newman, Allure reporter and CLI
+        run: |
+          npm install -g newman newman-reporter-allure allure-commandline
+
+      - name: Run Postman collection with Newman
+        run: |
+          newman run "Postman/Users_API_tests.postman_collection.json" \
+            -r allure \
+            --reporter-allure-export "Postman/allure-results"
+
+      - name: Generate Allure report
+        run: |
+          allure generate Postman/allure-results --clean -o Postman/allure-report
+
+      - name: Upload Allure report
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-api-report
+          path: Postman/allure-report
