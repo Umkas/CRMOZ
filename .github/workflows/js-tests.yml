@@ -1,18 +1,14 @@
-name: UI Tests (Playwright)
+name: UI Tests
 
 on:
-  workflow_dispatch:   
+  workflow_dispatch:     
 
 jobs:
   ui-tests:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: JS-PlayWright  
-
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -21,24 +17,40 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm install
+        working-directory: JS-PlayWright
+        run: npm ci
 
       - name: Install Playwright browsers
+        working-directory: JS-PlayWright
         run: npx playwright install --with-deps
 
-      - name: Run Playwright tests
-        run: npx playwright test
-        continue-on-error: true             
-
-      - name: Install Allure CLI
-        run: npm i -D allure-commandline allure-playwright
+      - name: Run UI tests
+        working-directory: JS-PlayWright
+        run: |
+          npx playwright test || true     # щоб був звіт, навіть якщо будуть падати тести
 
       - name: Generate Allure report
-        run: npx allure generate ./allure-results --clean -o ./allure-report
-        continue-on-error: true
+        working-directory: JS-PlayWright
+        run: |
+          npx allure generate allure-results --clean -o allure-report
 
-      - name: Upload Allure Report
-        uses: actions/upload-artifact@v4
+      - name: Upload report to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: allure-report-ui
           path: JS-PlayWright/allure-report
+
+  deploy:
+    needs: ui-tests
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
