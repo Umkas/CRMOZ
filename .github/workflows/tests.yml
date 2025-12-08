@@ -12,16 +12,6 @@ on:
         type: boolean
         default: false
 
-  push:
-    branches: [ "main" ]
-    paths:
-      - "JS-PlayWright/**"
-      - "Postman/**"
-      - ".github/workflows/tests.yml"
-
-  schedule:
-    - cron: "30 6 * * *"
-
 jobs:
   # UI: Playwright + Allure
   ui_tests:
