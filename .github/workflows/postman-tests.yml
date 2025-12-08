@@ -30,7 +30,7 @@ jobs:
           allure generate allure-results --clean -o allure-report
 
       - name: Upload report artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: allure-report
 
@@ -42,4 +42,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v3
