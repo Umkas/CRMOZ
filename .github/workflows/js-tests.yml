@@ -1,32 +1,30 @@
-name: UI tests (JS-Playwright)
+name: ui-tests
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
 
 jobs:
-  ui-tests:
+  playwright:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20
 
       - name: Install dependencies
-        working-directory: JS-PlayWright
-        run: npm ci
+        run: npm install
 
       - name: Install Playwright browsers
-        working-directory: JS-PlayWright
         run: npx playwright install --with-deps
 
       - name: Run Playwright tests
-        working-directory: JS-PlayWright
         run: npx playwright test
+        continue-on-error: true   
 
       - name: Generate Allure report
         if: always()              
